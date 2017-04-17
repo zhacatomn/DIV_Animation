@@ -1,0 +1,11 @@
+{
+	"compilerOptions":{
+		"outFile": "test.js",
+		"target": "es5"
+	},
+	"files": [
+		"library.ts",
+		"test_maps.ts",
+		"test_run.ts"
+	]
+}
