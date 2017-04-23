@@ -39,7 +39,15 @@ map1.run(function(){
 
 
 map2.run(function(){
-
+	if(library.keyPress(65))this.box1.x -= this.speed; //A
+	if(library.keyPress(68))this.box1.x += this.speed; //D
+	if(library.keyPress(87) && !this.allowJumpFunc){// Press W to Jump
+			this.jumpSpeed = this.INITIALJUMPSPEED;
+			this.allowJumpFunc = true;
+	}
+	if(this.allowJumpFunc){
+		this.jump(this.box1);
+	}
 });
 
-map.value = "map1";
+map.value = "map2";

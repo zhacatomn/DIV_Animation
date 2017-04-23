@@ -1,13 +1,17 @@
 function update() {
-    stopRecurring = true;
     currentMap.run.call(currentMap);
     library.update();
     requestAnimationFrame(function () { update.call(currentMap); });
 }
 var camera = document.getElementById("screen"); //link to the screen
+var cameraW = 800;
+var cameraH = 600;
 var currentMapDIV; //linking to the current map container
 var currentMap;
 var stopRecurring = false;
+var idGenerator = 1;
+camera.style.width = cameraW + "px";
+camera.style.height = cameraH + "px";
 var map = {
     set value(v) {
         this._value = v; //change value of map
@@ -20,8 +24,10 @@ var map = {
                     document.getElementById(mapContainer[i].id).style.display = "none"; //set all map to have no display
                 }
                 currentMapDIV.style.display = "inline"; //set only current map to have a display
-                if (!stopRecurring)
+                if (!stopRecurring) {
+                    stopRecurring = true;
                     update(); //run the update function (only once so that the functions do not overlap)
+                }
             }
         }
     },
@@ -55,13 +61,13 @@ var library;
             this.run = function (new_run) {
                 _this.run = new_run;
             };
-            this.w = object.w;
+            this.w = object.w; //add the width, height, and coordinates
             this.h = object.h;
             this.x = object.x;
             this.y = object.y;
-            this.id = object.id;
-            this.style = object.style;
-            camera.innerHTML += "<div id = '" + this.id + "'></div>";
+            this.id = object.id; //assign the map an id (ie. a name)
+            this.style = object.style; //assign the stye
+            camera.innerHTML += "<div id = '" + this.id + "'></div>"; //adding the div, and linking it to a div
             var created = document.getElementById(this.id);
             for (var i in object.style) {
                 created.style[i] = object.style[i];
@@ -71,20 +77,38 @@ var library;
             created.style.height = this.h + "px";
             created.style.left = this.x + "px";
             created.style.top = this.y + "px";
-            mapContainer.push(this);
+            mapContainer.push(this); //pushing the map into an array
         }
         return map_create;
     }());
     library.map_create = map_create;
     var create = (function () {
         function create(object) {
+            var _this = this;
+            this.on = function (event, code1, code2) {
+                if (code2 === void 0) { code2 = function () { }; }
+                if (event == "hover") {
+                    document.getElementById(_this.id).addEventListener("mouseover", function () {
+                        code1.call(currentMap);
+                    });
+                    document.getElementById(_this.id).addEventListener("mouseout", function () {
+                        code2.call(currentMap);
+                    });
+                }
+                if (event == "click") {
+                    document.getElementById(_this.id).addEventListener("click", function () {
+                        code1.call(currentMap);
+                    });
+                }
+            };
             //setting x, y, id and style
             this.x = object.x;
             this.y = object.y;
             this.w = object.w;
             this.h = object.h;
-            this.id = object.id;
+            this.id = idGenerator + " ";
             this.style = object.style;
+            idGenerator++;
             //creating the div
             currentMapDIV.innerHTML += "<div id = '" + this.id + "'></div>";
             var created = document.getElementById(this.id);
@@ -173,7 +197,6 @@ map1.add_elements(function () {
         y: 100,
         w: 200,
         h: 75,
-        id: "box1",
         content: "This is some text =)",
         style: {
             "backgroundColor": "lightgreen",
@@ -190,7 +213,6 @@ map1.add_elements(function () {
         y: 550,
         w: 50,
         h: 50,
-        id: "box2",
         content: " ",
         style: {
             "backgroundColor": "lightblue",
@@ -207,7 +229,6 @@ map1.add_elements(function () {
         y: 100,
         w: 250,
         h: 100,
-        id: "box3",
         content: "a box in the middle of nowhere =)",
         style: {
             "backgroundColor": "#CA8787",
@@ -225,7 +246,6 @@ map1.add_elements(function () {
         y: 0,
         w: map1.w,
         h: map1.h,
-        id: "image",
         content: "<img src = 'http://i.imgur.com/qlgoLVk.png' height='100%'>",
         style: {}
     });
@@ -247,21 +267,39 @@ var map2 = new library.map_create({
     }
 });
 map2.add_elements(function () {
-    this.box4 = new library.create({
+    this.box1 = new library.create({
         x: 0,
-        y: 0,
-        w: 100,
+        y: cameraH - 100,
+        w: 50,
         h: 100,
         content: "lol",
-        id: "box4",
         style: {
             "font-size": "20px",
-            "backgroundColor": "green",
+            "backgroundColor": "lightgreen",
             "display": "flex",
             "align-items": "center",
             "justify-content": "center",
             "font-family": "Roboto Thin"
         }
+    });
+    this.speed = 5;
+    this.INITIALJUMPSPEED = 20;
+    this.jumpSpeed = this.INITIALJUMPSPEED;
+    this.subtractJump = 1;
+    this.allowJumpFunc = false;
+    this.jump = function (object) {
+        object.y -= this.jumpSpeed;
+        this.jumpSpeed -= this.subtractJump;
+        if (this.jumpSpeed == -(this.INITIALJUMPSPEED + 1))
+            this.allowJumpFunc = false;
+    };
+    this.box1.on("hover", function () {
+        this.box1.style["backgroundColor"] = "#E99E9E";
+    }, function () {
+        this.box1.style["backgroundColor"] = "lightgreen";
+    });
+    this.box1.on("click", function () {
+        map.value = "map1";
     });
 });
 map1.run(function () {
@@ -307,5 +345,16 @@ map1.run(function () {
     */
 });
 map2.run(function () {
+    if (library.keyPress(65))
+        this.box1.x -= this.speed; //A
+    if (library.keyPress(68))
+        this.box1.x += this.speed; //D
+    if (library.keyPress(87) && !this.allowJumpFunc) {
+        this.jumpSpeed = this.INITIALJUMPSPEED;
+        this.allowJumpFunc = true;
+    }
+    if (this.allowJumpFunc) {
+        this.jump(this.box1);
+    }
 });
-map.value = "map1";
+map.value = "map2";

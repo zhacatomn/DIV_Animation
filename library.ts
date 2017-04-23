@@ -1,15 +1,20 @@
 function update(){
-	stopRecurring = true;
 	currentMap.run.call(currentMap);
 	library.update();
 
 	requestAnimationFrame(function(){update.call(currentMap)});
 }
-
 let camera = document.getElementById("screen"); //link to the screen
+let cameraW = 800;
+let cameraH = 600;
 let currentMapDIV; //linking to the current map container
 let currentMap;
 let stopRecurring = false;
+let idGenerator = 1;
+
+camera.style.width = cameraW + "px";
+camera.style.height = cameraH + "px";
+
 let map = {
 	set value(v : string) {
 		this._value = v; //change value of map
@@ -26,7 +31,10 @@ let map = {
 				}
 				currentMapDIV.style.display = "inline"; //set only current map to have a display
 
-				if(!stopRecurring) update(); //run the update function (only once so that the functions do not overlap)
+				if(!stopRecurring){
+					stopRecurring = true;
+					update(); //run the update function (only once so that the functions do not overlap)
+				}
 			}
 		}
 	}
@@ -61,17 +69,17 @@ namespace library{
 
 		constructor(object){
 
-			this.w = object.w;
+			this.w = object.w; //add the width, height, and coordinates
 			this.h = object.h;
 			this.x = object.x;
 			this.y = object.y;
-			this.id = object.id;
-			this.style = object.style;
+			this.id = object.id; //assign the map an id (ie. a name)
+			this.style = object.style; //assign the stye
 
-			camera.innerHTML += "<div id = '" + this.id + "'></div>";
+			camera.innerHTML += "<div id = '" + this.id + "'></div>"; //adding the div, and linking it to a div
 
-			let created = document.getElementById(this.id);
-			for(var i in object.style){
+			let created = document.getElementById(this.id); 
+			for(var i in object.style){ //changing the style of the div
 				created.style[i] = object.style[i];
 			}
 
@@ -81,7 +89,7 @@ namespace library{
 			created.style.left = this.x + "px";
 			created.style.top = this.y + "px";
 
-			mapContainer.push(this);
+			mapContainer.push(this); //pushing the map into an array
 		}
 
 		add_elements = (elements) => {
@@ -116,8 +124,10 @@ namespace library{
 			this.w = object.w;
 			this.h = object.h;
 
-			this.id = object.id;
+			this.id = idGenerator + " ";
 			this.style = object.style;
+
+			idGenerator++;
 
 			//creating the div
 			currentMapDIV.innerHTML += "<div id = '"+ this.id + "'></div>";
@@ -139,6 +149,22 @@ namespace library{
 
 			//store all te objects in an array
 			currentMap.objectContainer.push(this);
+		}
+
+		on = (event:string, code1, code2 = () => {}) => {
+			if(event == "hover"){
+				document.getElementById(this.id).addEventListener("mouseover", function(){
+					code1.call(currentMap);
+				});
+				document.getElementById(this.id).addEventListener("mouseout", function(){
+					code2.call(currentMap);
+				});
+			}
+			if(event == "click"){
+				document.getElementById(this.id).addEventListener("click", function(){
+					code1.call(currentMap);
+				});
+			}
 		}
 	}
 
