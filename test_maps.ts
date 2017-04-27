@@ -106,25 +106,52 @@ map2.add_elements(function(){
 			"display": "flex",
 			"align-items": "center",
 			"justify-content": "center",
-			"font-family": "Roboto Thin"
+			"font-family": "Roboto Thin",
+			"z-index": "2"
 		}
 	});
-	this.speed = 5;
-	this.INITIALJUMPSPEED = 20;
-	this.jumpSpeed = this.INITIALJUMPSPEED;
-	this.subtractJump = 1;
+
+	this.platArray = [
+		this.plat1 = new library.create({
+			x: 300,
+			y: cameraW/2,
+			w: 200,
+			h: 50,
+			content: " ",
+			style:{
+				"background-color": "red"
+			}
+		}),
+
+		this.plat2 = new library.create({
+			x: 200,
+			y: 150,
+			w: 200,
+			h: 50,
+			content: " ",
+			style:{
+				"background-color": "red"
+			}
+		})
+	];
+
+	this.velocity = 0;
 	this.allowJumpFunc = false;
+	this.speed = 5;
 
 	this.jump = function(object){
-		object.y -= this.jumpSpeed;
-		this.jumpSpeed -= this.subtractJump;
-		if(this.jumpSpeed == -(this.INITIALJUMPSPEED + 1)) this.allowJumpFunc = false;
+		this.velocity += 1;
+		if(this.velocity >= 0){
+			this.allowJumpFunc = false;
+		}
 	}
+
 	this.box1.on("hover", function(){
 		this.box1.style["backgroundColor"] = "#E99E9E";
 	}, function(){
 		this.box1.style["backgroundColor"] = "lightgreen";
 	});
+
 	this.box1.on("click", function(){
 		map.value = "map1";
 	});

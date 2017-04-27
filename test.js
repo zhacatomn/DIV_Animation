@@ -279,19 +279,40 @@ map2.add_elements(function () {
             "display": "flex",
             "align-items": "center",
             "justify-content": "center",
-            "font-family": "Roboto Thin"
+            "font-family": "Roboto Thin",
+            "z-index": "2"
         }
     });
-    this.speed = 5;
-    this.INITIALJUMPSPEED = 20;
-    this.jumpSpeed = this.INITIALJUMPSPEED;
-    this.subtractJump = 1;
+    this.platArray = [
+        this.plat1 = new library.create({
+            x: 300,
+            y: cameraW / 2,
+            w: 200,
+            h: 50,
+            content: " ",
+            style: {
+                "background-color": "red"
+            }
+        }),
+        this.plat2 = new library.create({
+            x: 200,
+            y: 150,
+            w: 200,
+            h: 50,
+            content: " ",
+            style: {
+                "background-color": "red"
+            }
+        })
+    ];
+    this.velocity = 0;
     this.allowJumpFunc = false;
+    this.speed = 5;
     this.jump = function (object) {
-        object.y -= this.jumpSpeed;
-        this.jumpSpeed -= this.subtractJump;
-        if (this.jumpSpeed == -(this.INITIALJUMPSPEED + 1))
+        this.velocity += 1;
+        if (this.velocity >= 0) {
             this.allowJumpFunc = false;
+        }
     };
     this.box1.on("hover", function () {
         this.box1.style["backgroundColor"] = "#E99E9E";
@@ -349,12 +370,36 @@ map2.run(function () {
         this.box1.x -= this.speed; //A
     if (library.keyPress(68))
         this.box1.x += this.speed; //D
-    if (library.keyPress(87) && !this.allowJumpFunc) {
-        this.jumpSpeed = this.INITIALJUMPSPEED;
+    if (library.keyPress(87) && !this.allowJumpFunc && this.velocity == 0) {
         this.allowJumpFunc = true;
+        this.velocity = -23; //set a negative velocity
     }
     if (this.allowJumpFunc) {
-        this.jump(this.box1);
+        this.jump(this.box1); //jumping function (all it does is increase the velocity)
     }
+    if (this.velocity >= 0) {
+        var foo = true;
+        for (var i = 0; i < this.platArray.length; i++) {
+            var platform = this.platArray[i];
+            // determine if the object is on the top of a platform
+            if (this.box1.x > platform.x && this.box1.x < platform.x + platform.w
+                || this.box1.x + this.box1.w > platform.x && this.box1.x + this.box1.w < platform.x + platform.w) {
+                if (this.box1.y + this.box1.h <= platform.y && this.box1.y + this.box1.h + this.velocity >= platform.y) {
+                    foo = false;
+                    this.box1.y = platform.y - this.box1.h; // set the y axis accordingly
+                    this.velocity = 0; //set the velocity to 0
+                    break;
+                }
+            }
+        }
+        if (this.box1.y + this.box1.h < cameraH && foo) {
+            this.velocity++; //increase the velocity of a falling object and provided that it is not on a platform ie. gravity
+        }
+    }
+    if (this.box1.y + this.box1.h > cameraH) {
+        this.box1.y = cameraH - this.box1.h;
+        this.velocity = 0;
+    }
+    this.box1.y += this.velocity; //add the velocity (NOTE: positive velocity us moving down; negative velocity is moving up)
 });
 map.value = "map2";
