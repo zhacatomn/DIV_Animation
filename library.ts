@@ -30,6 +30,7 @@ let map = {
 					document.getElementById(mapContainer[i].id).style.display = "none"; //set all map to have no display
 				}
 				currentMapDIV.style.display = "inline"; //set only current map to have a display
+				console.log("test");
 
 				if(!stopRecurring){
 					stopRecurring = true;
@@ -69,12 +70,9 @@ namespace library{
 
 		constructor(object){
 
-			this.w = object.w; //add the width, height, and coordinates
-			this.h = object.h;
-			this.x = object.x;
-			this.y = object.y;
-			this.id = object.id; //assign the map an id (ie. a name)
-			this.style = object.style; //assign the stye
+			for(var i in object){
+				this[i] = object[i];
+			}
 
 			camera.innerHTML += "<div id = '" + this.id + "'></div>"; //adding the div, and linking it to a div
 
@@ -119,13 +117,11 @@ namespace library{
 		constructor(object){
 
 			//setting x, y, id and style
-			this.x = object.x;
-			this.y = object.y;
-			this.w = object.w;
-			this.h = object.h;
+			for(var i in object){
+				this[i] = object[i];
+			}
 
 			this.id = idGenerator + " ";
-			this.style = object.style;
 
 			idGenerator++;
 

@@ -24,6 +24,7 @@ var map = {
                     document.getElementById(mapContainer[i].id).style.display = "none"; //set all map to have no display
                 }
                 currentMapDIV.style.display = "inline"; //set only current map to have a display
+                console.log("test");
                 if (!stopRecurring) {
                     stopRecurring = true;
                     update(); //run the update function (only once so that the functions do not overlap)
@@ -61,12 +62,9 @@ var library;
             this.run = function (new_run) {
                 _this.run = new_run;
             };
-            this.w = object.w; //add the width, height, and coordinates
-            this.h = object.h;
-            this.x = object.x;
-            this.y = object.y;
-            this.id = object.id; //assign the map an id (ie. a name)
-            this.style = object.style; //assign the stye
+            for (var i in object) {
+                this[i] = object[i];
+            }
             camera.innerHTML += "<div id = '" + this.id + "'></div>"; //adding the div, and linking it to a div
             var created = document.getElementById(this.id);
             for (var i in object.style) {
@@ -102,12 +100,10 @@ var library;
                 }
             };
             //setting x, y, id and style
-            this.x = object.x;
-            this.y = object.y;
-            this.w = object.w;
-            this.h = object.h;
+            for (var i in object) {
+                this[i] = object[i];
+            }
             this.id = idGenerator + " ";
-            this.style = object.style;
             idGenerator++;
             //creating the div
             currentMapDIV.innerHTML += "<div id = '" + this.id + "'></div>";
@@ -267,11 +263,21 @@ var map2 = new library.map_create({
     }
 });
 map2.add_elements(function () {
+    this.image = new library.create({
+        x: 0,
+        y: 0,
+        w: map2.w,
+        h: map2.h,
+        content: "<img src = 'http://i.imgur.com/qlgoLVk.png' height='100%'>",
+        style: {}
+    });
     this.box1 = new library.create({
         x: 0,
-        y: cameraH - 100,
+        y: cameraH - 100 - 100,
         w: 50,
         h: 100,
+        velocityX: 0,
+        velocityY: 0,
         content: "lol",
         style: {
             "font-size": "20px",
@@ -286,31 +292,55 @@ map2.add_elements(function () {
     this.platArray = [
         this.plat1 = new library.create({
             x: 300,
-            y: cameraW / 2,
-            w: 200,
-            h: 50,
+            y: 300,
+            w: 400,
+            h: 20,
+            velocityX: -3,
+            velocityY: 0,
             content: " ",
             style: {
-                "background-color": "red"
+                "background-color": "red",
+                "z-index": "2"
             }
         }),
         this.plat2 = new library.create({
             x: 200,
             y: 150,
             w: 200,
-            h: 50,
+            h: 20,
+            velocityX: 0,
+            velocityY: 3,
             content: " ",
             style: {
-                "background-color": "red"
+                "background-color": "red",
+                "z-index": "2"
+            }
+        }),
+        this.platground = new library.create({
+            x: 0,
+            h: 100,
+            y: cameraH - 100,
+            w: this.w,
+            velocityX: 0,
+            velocityY: 0,
+            content: " ",
+            style: {
+                "background-color": "orange",
+                "z-index": "2"
             }
         })
     ];
-    this.velocity = 0;
+    this.frames = 0;
     this.allowJumpFunc = false;
     this.speed = 5;
     this.jump = function (object) {
-        this.velocity += 1;
-        if (this.velocity >= 0) {
+        if (!library.keyPress(87)) {
+            object.velocityY += 15;
+        }
+        object.velocityY += 1;
+        if (object.velocityY > 0)
+            object.velocityY = 0;
+        if (object.velocityY >= 0) {
             this.allowJumpFunc = false;
         }
     };
@@ -322,6 +352,18 @@ map2.add_elements(function () {
     this.box1.on("click", function () {
         map.value = "map1";
     });
+    var _loop_1 = function () {
+        var currentPlat = this_1.platArray[i];
+        this_1.platArray[i].on("hover", function () {
+            currentPlat.style["backgroundColor"] = "blue";
+        }, function () {
+            currentPlat.style["backgroundColor"] = "red";
+        });
+    };
+    var this_1 = this;
+    for (var i = 0; i < this.platArray.length; i++) {
+        _loop_1();
+    }
 });
 map1.run(function () {
     if (this.box1.x < 50)
@@ -365,41 +407,78 @@ map1.run(function () {
     if(this.box2.y == this.intial_y) this.counter++;
     */
 });
+var onPlat = false;
 map2.run(function () {
-    if (library.keyPress(65))
-        this.box1.x -= this.speed; //A
-    if (library.keyPress(68))
-        this.box1.x += this.speed; //D
-    if (library.keyPress(87) && !this.allowJumpFunc && this.velocity == 0) {
-        this.allowJumpFunc = true;
-        this.velocity = -23; //set a negative velocity
-    }
+    onPlat = false;
+    this.box1.velocityX = 0;
+    if (this.platArray[0].x < 50)
+        this.platArray[0].velocityX = 3; //move first platform left and right
+    else if (this.platArray[0].x > 600)
+        this.platArray[0].velocityX = -3;
+    if (this.platArray[1].y < 50)
+        this.platArray[1].velocityY = 3; // move second platform up and down
+    else if (this.platArray[1].y > 400)
+        this.platArray[1].velocityY = -3;
+    if (this.box1.x >= 400)
+        this.x = -(this.box1.x - 400) - 5; //camera
+    else
+        this.x = 0;
     if (this.allowJumpFunc) {
         this.jump(this.box1); //jumping function (all it does is increase the velocity)
     }
-    if (this.velocity >= 0) {
+    if (!this.allowJumpFunc) {
         var foo = true;
         for (var i = 0; i < this.platArray.length; i++) {
             var platform = this.platArray[i];
+            if (platform.style["display"] == "none")
+                continue;
             // determine if the object is on the top of a platform
             if (this.box1.x > platform.x && this.box1.x < platform.x + platform.w
                 || this.box1.x + this.box1.w > platform.x && this.box1.x + this.box1.w < platform.x + platform.w) {
-                if (this.box1.y + this.box1.h <= platform.y && this.box1.y + this.box1.h + this.velocity >= platform.y) {
+                if ((this.box1.y + this.box1.h <= platform.y && this.box1.y + this.box1.h + this.box1.velocityY >= platform.y)
+                    || this.box1.y + this.box1.h == platform.y) {
+                    onPlat = true; // set it to be on a platform
                     foo = false;
                     this.box1.y = platform.y - this.box1.h; // set the y axis accordingly
-                    this.velocity = 0; //set the velocity to 0
+                    // transfer platform velocity to box1
+                    this.box1.velocityY = platform.velocityY;
+                    this.box1.velocityX = platform.velocityX;
                     break;
                 }
             }
         }
         if (this.box1.y + this.box1.h < cameraH && foo) {
-            this.velocity++; //increase the velocity of a falling object and provided that it is not on a platform ie. gravity
+            this.box1.velocityY++; //increase the velocity of a falling object and provided that it is not on a platform ie. gravity
         }
+    }
+    if (library.keyPress(65)) {
+        if (this.box1.velocityX > 0)
+            this.box1.velocityX = -(this.speed - this.box1.velocityX);
+        else
+            this.box1.velocityX -= this.speed; //A
+        //console.log(this.box1.velocityX);
+        //if(this.box1.x >= 400 && this.box1.x <= this.w - 400)this.x += this.speed;
+    }
+    if (library.keyPress(68)) {
+        if (this.box1.velocityX < 0)
+            this.box1.velocityX = this.speed + this.box1.velocityX;
+        else
+            this.box1.velocityX += this.speed; //D
+        //if(this.box1.x >= 400 && this.box1.x <= this.w - 400)this.x -= this.speed;
+    }
+    if (library.keyPress(87) && !this.allowJumpFunc && onPlat) {
+        this.allowJumpFunc = true;
+        this.box1.velocityY = -23; //set a negative velocity
     }
     if (this.box1.y + this.box1.h > cameraH) {
         this.box1.y = cameraH - this.box1.h;
-        this.velocity = 0;
+        this.box1.velocityY = 0;
     }
-    this.box1.y += this.velocity; //add the velocity (NOTE: positive velocity us moving down; negative velocity is moving up)
+    //console.log(this.box1.velocityY);
+    for (var i = 0; i < this.objectContainer.length; i++) {
+        this.objectContainer[i].y += this.objectContainer[i].velocityY;
+        this.objectContainer[i].x += this.objectContainer[i].velocityX;
+    }
+    this.frames++;
 });
 map.value = "map2";
