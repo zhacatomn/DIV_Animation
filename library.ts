@@ -1,8 +1,9 @@
 function update(){
-	currentMap.run.call(currentMap);
-	library.update();
+	if(mode == "play") currentMap.run.call(currentMap); // runs the "run" method of the currentMap
+	if(mode == "dev" && dev_movement)library.dev(dev_object);
+	library.update(); // updates the display
 
-	requestAnimationFrame(function(){update.call(currentMap)});
+	requestAnimationFrame(function(){update.call(currentMap)}); // loops back to the start
 }
 let camera = document.getElementById("screen"); //link to the screen
 let cameraW = 800;
@@ -11,11 +12,29 @@ let currentMapDIV; //linking to the current map container
 let currentMap;
 let stopRecurring = false;
 let idGenerator = 1;
+let mode = "play";
+
+// dev variables
+let dev_object = null;
+let dev_movement = false;
+let mouse_x = 0;
+let mouse_y = 0;
 
 camera.style.width = cameraW + "px";
 camera.style.height = cameraH + "px";
 camera.style.overflow = "hidden";
 camera.style.position = "absolute";
+
+camera.onmousemove = function(event){ // track mouse movements
+	mouse_x = event.clientX;
+	mouse_y = event.clientY;
+}
+camera.onmousedown = function(){
+	if(dev_movement && mode == "dev"){
+		dev_movement = false;
+		dev_object = null;
+	}
+}
 
 let map = {
 	set value(v : string) {
@@ -32,7 +51,6 @@ let map = {
 					document.getElementById(mapContainer[i].id).style.display = "none"; //set all map to have no display
 				}
 				currentMapDIV.style.display = "inline"; //set only current map to have a display
-				console.log("test");
 
 				if(!stopRecurring){
 					stopRecurring = true;
@@ -76,9 +94,9 @@ namespace library{
 				this[i] = object[i];
 			}
 
-			camera.innerHTML += "<div id = '" + this.id + "'></div>"; //adding the div, and linking it to a div
+			var created = document.createElement("div");
 
-			let created = document.getElementById(this.id); 
+			created.id = this.id;
 			for(var i in object.style){ //changing the style of the div
 				created.style[i] = object.style[i];
 			}
@@ -89,6 +107,7 @@ namespace library{
 			created.style.left = this.x + "px";
 			created.style.top = this.y + "px";
 
+			camera.appendChild(created);
 			mapContainer.push(this); //pushing the map into an array
 		}
 
@@ -99,6 +118,7 @@ namespace library{
 			currentMap = this;
 
 			elements.call(this);
+
 			currentMapDIV = prev_container;
 			currentMap = prev_map;
 		}
@@ -128,9 +148,10 @@ namespace library{
 			idGenerator++;
 
 			//creating the div
-			currentMapDIV.innerHTML += "<div id = '"+ this.id + "'></div>";
 
-			let created = document.getElementById(this.id);
+			var created = document.createElement("div");
+
+			created.id = this.id;
 
 			//style object
 			for(var i in object.style){
@@ -145,12 +166,19 @@ namespace library{
 			created.style.height = this.h + "px";
 			created.innerHTML = object.content;
 
+			currentMapDIV.appendChild(created);
 			//store all te objects in an array
 			currentMap.objectContainer.push(this);
+
+			this.on("click", function(){
+				
+			});
+
 		}
 
-		on = (event:string, code1, code2 = () => {}) => {
-			if(event == "hover"){
+		on = (event_word:string, code1, code2 = () => {}) => {
+			var object = this;
+			if(event_word == "hover"){
 				document.getElementById(this.id).addEventListener("mouseover", function(){
 					code1.call(currentMap);
 				});
@@ -158,10 +186,15 @@ namespace library{
 					code2.call(currentMap);
 				});
 			}
-			if(event == "click"){
+			if(event_word == "click"){
 				document.getElementById(this.id).addEventListener("click", function(){
-					code1.call(currentMap);
-				});
+					if(mode == "play") code1.call(currentMap);
+
+					else if(mode == "dev" && !dev_movement){ // if the current mode os dev and no object is being move
+						dev_movement = true;
+						dev_object = object;			
+					} // calls the dev function
+				}); 
 			}
 		}
 	}
@@ -229,6 +262,11 @@ namespace library{
 
 		if(result > 0)return result;
 		else return 0;
+	}
+
+	export function dev(object){
+		object.x = mouse_x;
+		object.y = mouse_y;
 	}
 }
 

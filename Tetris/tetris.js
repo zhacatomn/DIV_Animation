@@ -1,7 +1,10 @@
 function update() {
-    currentMap.run.call(currentMap);
-    library.update();
-    requestAnimationFrame(function () { update.call(currentMap); });
+    if (mode == "play")
+        currentMap.run.call(currentMap); // runs the "run" method of the currentMap
+    if (mode == "dev" && dev_movement)
+        library.dev(dev_object);
+    library.update(); // updates the display
+    requestAnimationFrame(function () { update.call(currentMap); }); // loops back to the start
 }
 var camera = document.getElementById("screen"); //link to the screen
 var cameraW = 800;
@@ -10,10 +13,26 @@ var currentMapDIV; //linking to the current map container
 var currentMap;
 var stopRecurring = false;
 var idGenerator = 1;
+var mode = "play";
+// dev variables
+var dev_object = null;
+var dev_movement = false;
+var mouse_x = 0;
+var mouse_y = 0;
 camera.style.width = cameraW + "px";
 camera.style.height = cameraH + "px";
 camera.style.overflow = "hidden";
 camera.style.position = "absolute";
+camera.onmousemove = function (event) {
+    mouse_x = event.clientX;
+    mouse_y = event.clientY;
+};
+camera.onmousedown = function () {
+    if (dev_movement && mode == "dev") {
+        dev_movement = false;
+        dev_object = null;
+    }
+};
 var map = {
     set value(v) {
         this._value = v; //change value of map
@@ -26,7 +45,6 @@ var map = {
                     document.getElementById(mapContainer[i].id).style.display = "none"; //set all map to have no display
                 }
                 currentMapDIV.style.display = "inline"; //set only current map to have a display
-                console.log("test");
                 if (!stopRecurring) {
                     stopRecurring = true;
                     update(); //run the update function (only once so that the functions do not overlap)
@@ -67,8 +85,8 @@ var library;
             for (var i in object) {
                 this[i] = object[i];
             }
-            camera.innerHTML += "<div id = '" + this.id + "'></div>"; //adding the div, and linking it to a div
-            var created = document.getElementById(this.id);
+            var created = document.createElement("div");
+            created.id = this.id;
             for (var i in object.style) {
                 created.style[i] = object.style[i];
             }
@@ -77,6 +95,7 @@ var library;
             created.style.height = this.h + "px";
             created.style.left = this.x + "px";
             created.style.top = this.y + "px";
+            camera.appendChild(created);
             mapContainer.push(this); //pushing the map into an array
         }
         return map_create;
@@ -85,9 +104,10 @@ var library;
     var create = (function () {
         function create(object) {
             var _this = this;
-            this.on = function (event, code1, code2) {
+            this.on = function (event_word, code1, code2) {
                 if (code2 === void 0) { code2 = function () { }; }
-                if (event == "hover") {
+                var object = _this;
+                if (event_word == "hover") {
                     document.getElementById(_this.id).addEventListener("mouseover", function () {
                         code1.call(currentMap);
                     });
@@ -95,9 +115,14 @@ var library;
                         code2.call(currentMap);
                     });
                 }
-                if (event == "click") {
+                if (event_word == "click") {
                     document.getElementById(_this.id).addEventListener("click", function () {
-                        code1.call(currentMap);
+                        if (mode == "play")
+                            code1.call(currentMap);
+                        else if (mode == "dev" && !dev_movement) {
+                            dev_movement = true;
+                            dev_object = object;
+                        } // calls the dev function
                     });
                 }
             };
@@ -108,8 +133,8 @@ var library;
             this.id = idGenerator + " ";
             idGenerator++;
             //creating the div
-            currentMapDIV.innerHTML += "<div id = '" + this.id + "'></div>";
-            var created = document.getElementById(this.id);
+            var created = document.createElement("div");
+            created.id = this.id;
             //style object
             for (var i in object.style) {
                 created.style[i] = object.style[i];
@@ -121,8 +146,12 @@ var library;
             created.style.width = this.w + "px";
             created.style.height = this.h + "px";
             created.innerHTML = object.content;
+            currentMapDIV.appendChild(created);
             //store all te objects in an array
             currentMap.objectContainer.push(this);
+            this.on("click", function () {
+                console.log("test"); // controls for dev mode
+            });
         }
         return create;
     }());
@@ -181,6 +210,11 @@ var library;
             return 0;
     }
     library.trajectory = trajectory;
+    function dev(object) {
+        object.x = mouse_x;
+        object.y = mouse_y;
+    }
+    library.dev = dev;
 })(library || (library = {}));
 // Setup 
 var game = new library.map_create({
@@ -216,7 +250,7 @@ var frame = 0; // frame counter
 var unit_length = 600 / 20; // length of one square
 var generate_first_block = 0;
 //only detect one key press at a time
-var press_r = true;
+var press_w = true;
 var press_a = 0;
 var press_d = 0;
 //speed of the block
@@ -246,7 +280,7 @@ game.add_elements(function () {
         content: "<span style='text-align: center;'>Score: <br> 0 </span>",
         style: {
             "border": "1px solid black",
-            "fontFamily": "FFF Forward",
+            "fontFamily": "Century Gothic",
             "display": "flex",
             "justifyContent": "center",
             "alignItems": "center"
@@ -263,7 +297,7 @@ game.add_elements(function () {
                 h: unit_length,
                 content: "<span style='text-align: center;'>Next Piece</span>",
                 style: {
-                    "fontFamily": "FFF Forward",
+                    "fontFamily": "Century Gothic",
                     "display": "flex",
                     "justifyContent": "center",
                     "alignItems": "center"
@@ -474,13 +508,13 @@ game.run(function () {
         }
     }
     // MOVEMENT
-    // rotate (R)
-    if (library.keyPress(82) && press_r) {
-        press_r = false;
+    // rotate (W)
+    if (library.keyPress(87) && press_w) {
+        press_w = false;
         this.rotate();
     }
-    if (!library.keyPress(82))
-        press_r = true;
+    if (!library.keyPress(87))
+        press_w = true;
     //Move left and right
     if (library.keyPress(65)) {
         if (press_a % 5 == 0)

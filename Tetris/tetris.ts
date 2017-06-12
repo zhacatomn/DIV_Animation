@@ -44,7 +44,7 @@ let unit_length = 600/20; // length of one square
 var generate_first_block = 0; 
 
 //only detect one key press at a time
-var press_r = true; 
+var press_w = true; 
 var press_a = 0;
 var press_d = 0;
 
@@ -80,7 +80,7 @@ game.add_elements(function(){
 	 			"<span style='text-align: center;'>Score: <br> 0 </span>",
 	 		style:{
 	 			"border": "1px solid black",
-	 			"fontFamily": "FFF Forward",
+	 			"fontFamily": "Century Gothic",
 	 			
 	 			"display": "flex",
 	 			"justifyContent": "center",
@@ -102,7 +102,7 @@ game.add_elements(function(){
 				h: unit_length,
 				content: "<span style='text-align: center;'>Next Piece</span>",
 				style: { 
-	 				"fontFamily": "FFF Forward",
+	 				"fontFamily": "Century Gothic",
 	 			
 	 				"display": "flex",
 	 				"justifyContent": "center",
@@ -340,13 +340,13 @@ game.run(function(){
 
 	// MOVEMENT
 
-	// rotate (R)
-	if(library.keyPress(82) && press_r){
-		press_r = false;
+	// rotate (W)
+	if(library.keyPress(87) && press_w){
+		press_w = false;
 		this.rotate();
 	}
 
-	if(!library.keyPress(82))press_r = true;
+	if(!library.keyPress(87))press_w = true;
 
 
 	//Move left and right
